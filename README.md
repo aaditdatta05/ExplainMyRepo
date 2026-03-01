@@ -20,3 +20,26 @@ Understanding a new codebase can be time-consuming and difficult. RepoExplainer 
 - Students learning from real-world repositories
 - Hackathon reviewers evaluating submissions
 - Teams onboarding new contributors
+
+## Project Status
+
+Initial implementation has started. The repository now includes a FastAPI backend scaffold,
+environment-based settings, baseline quality tooling, and CI checks.
+
+## Quick Start
+
+1. Create and activate a Python 3.11 virtual environment.
+2. Install dependencies:
+	- `pip install -r requirements-dev.txt`
+3. Run the API locally:
+	- `uvicorn app.main:app --reload`
+4. Verify service health:
+	- Open `http://127.0.0.1:8000/health`
+
+## Development Commands
+
+- `pytest` to run tests
+- `ruff check .` to lint
+- `ruff format .` to format
+- `mypy app tests` to type-check
+- `pre-commit install` to enable local hooks
