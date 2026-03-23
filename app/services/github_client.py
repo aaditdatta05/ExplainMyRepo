@@ -23,7 +23,11 @@ class GitHubClient:
         if token:
             headers["Authorization"] = f"Bearer {token}"
 
-        self._client = httpx.Client(base_url="https://api.github.com", headers=headers, timeout=timeout)
+        self._client = httpx.Client(
+            base_url="https://api.github.com",
+            headers=headers,
+            timeout=timeout,
+        )
 
     def close(self) -> None:
         self._client.close()

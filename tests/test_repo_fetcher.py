@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from app.services.repo_fetcher import RepoFetchError, RepoFetcher
+from app.services.repo_fetcher import RepoFetcher, RepoFetchError
 from app.services.repo_url import RepoRef
 
 

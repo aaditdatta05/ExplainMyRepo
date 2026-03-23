@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-
 DEFAULT_IGNORED_DIRS = {
     ".git",
     ".venv",
@@ -31,7 +30,12 @@ def scan_repository_tree(root: Path, ignored_dirs: set[str] | None = None) -> li
         if any(part in resolved_ignored for part in relative.parts):
             continue
 
-        nodes.append(FileNode(path=str(relative).replace("\\", "/"), size_bytes=path.stat().st_size))
+        nodes.append(
+            FileNode(
+                path=str(relative).replace("\\", "/"),
+                size_bytes=path.stat().st_size,
+            )
+        )
 
     nodes.sort(key=lambda item: item.path)
     return nodes
