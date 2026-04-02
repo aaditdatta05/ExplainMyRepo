@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     env: str = Field(default="development")
     log_level: str = Field(default="INFO")
     openai_api_key: str = Field(default="")
+    llm_timeout_seconds: float = Field(default=20.0)
+    llm_max_retries: int = Field(default=2)
+    llm_base_backoff_seconds: float = Field(default=0.5)
 
 
 @lru_cache(maxsize=1)
