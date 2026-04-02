@@ -35,6 +35,10 @@ environment-based settings, baseline quality tooling, and CI checks.
 	- `uvicorn app.main:app --reload`
 4. Verify service health:
 	- Open `http://127.0.0.1:8000/health`
+5. Run the Streamlit UI:
+	- `streamlit run streamlit_app.py`
+6. Open the UI:
+	- `http://localhost:8501`
 
 ## Development Commands
 

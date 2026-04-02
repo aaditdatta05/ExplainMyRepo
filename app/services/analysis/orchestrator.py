@@ -37,13 +37,15 @@ class RepositoryAnalysisOrchestrator:
             "Write a concise project overview for repository "
             f"{owner}/{repo} mentioning purpose and audience."
         )
-        modules = (
-            "Core modules include API routes in app/api, runtime configuration in app/core, "
-            "and orchestration services in app/services."
+        modules = await self._llm_client.generate(
+            "Based only on repository identity and common project conventions, write a short "
+            f"'Core Modules' section for {owner}/{repo}. Keep it factual, concise, and avoid "
+            "inventing unknown internals."
         )
-        flow = (
-            "The API accepts a repository URL, builds analysis context, generates sectioned "
-            "explanations, then returns markdown and JSON outputs with citations."
+        flow = await self._llm_client.generate(
+            "Write a short likely workflow summary for repository "
+            f"{owner}/{repo}. Mention input, main processing stages, and output style "
+            "without claiming certainty about unknown code."
         )
 
         result = ExplanationResult(

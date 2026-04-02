@@ -2,8 +2,12 @@ from app.core.config import get_settings
 from app.core.observability import MetricsRegistry
 from app.services.analysis.orchestrator import RepositoryAnalysisOrchestrator
 from app.services.cache import RepositoryAnalysisCache
-from app.services.llm import LLMRetryConfig, ResilientLLMClient
-from app.services.llm.providers import TemplateLLMProvider
+from app.services.llm import LLMProvider, LLMRetryConfig, ResilientLLMClient
+from app.services.llm.providers import (
+    GeminiLLMProvider,
+    MissingCredentialsLLMProvider,
+    TemplateLLMProvider,
+)
 
 _metrics_registry = MetricsRegistry()
 _analysis_cache: RepositoryAnalysisCache | None = None
@@ -26,8 +30,10 @@ def get_analysis_cache() -> RepositoryAnalysisCache:
 def get_analysis_orchestrator() -> RepositoryAnalysisOrchestrator:
     settings = get_settings()
 
+    provider = get_llm_provider()
+
     client = ResilientLLMClient(
-        provider=TemplateLLMProvider(),
+        provider=provider,
         retry_config=LLMRetryConfig(
             timeout_seconds=settings.llm_timeout_seconds,
             max_retries=settings.llm_max_retries,
@@ -38,3 +44,21 @@ def get_analysis_orchestrator() -> RepositoryAnalysisOrchestrator:
         llm_client=client,
         cache=get_analysis_cache(),
     )
+
+
+def get_llm_provider() -> LLMProvider:
+    settings = get_settings()
+    provider_name = settings.llm_provider.strip().lower()
+
+    if provider_name == "gemini":
+        if not settings.gemini_api_key:
+            return MissingCredentialsLLMProvider(
+                provider_name="Gemini",
+                env_var_name="EXPLAIN_MY_REPO_GEMINI_API_KEY",
+            )
+        return GeminiLLMProvider(
+            api_key=settings.gemini_api_key,
+            model=settings.gemini_model,
+        )
+
+    return TemplateLLMProvider()
