@@ -14,7 +14,7 @@ from app.api.schemas import (
     CitationResponse,
 )
 from app.services.analysis import InvalidRepositoryUrlError, RepositoryAnalysisOrchestrator
-from app.services.llm import LLMCallError
+from app.services.llm import LLMCallError, LLMRateLimitError
 
 router = APIRouter(prefix="/analyze", tags=["analysis"])
 
@@ -30,6 +30,12 @@ async def _analyze_repository_url(
             code="invalid_repository_url",
             message=str(exc),
             status_code=status.HTTP_400_BAD_REQUEST,
+        ) from exc
+    except LLMRateLimitError as exc:
+        raise AppError(
+            code="llm_rate_limited",
+            message="LLM rate limit exceeded. Please retry shortly.",
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         ) from exc
     except LLMCallError as exc:
         raise AppError(
@@ -96,6 +102,12 @@ async def stream_repository_analysis(
         except InvalidRepositoryUrlError as exc:
             error_payload = {"code": "invalid_repository_url", "message": str(exc)}
             yield f"event: error\ndata: {json.dumps(error_payload)}\n\n"
+        except LLMRateLimitError:
+            error_payload = {
+                "code": "llm_rate_limited",
+                "message": "LLM rate limit exceeded. Please retry shortly.",
+            }
+            yield f"event: error\ndata: {json.dumps(error_payload)}\n\n"
         except LLMCallError:
             error_payload = {
                 "code": "llm_unavailable",
@@ -123,6 +135,12 @@ async def export_repository_analysis(
             code="invalid_repository_url",
             message=str(exc),
             status_code=status.HTTP_400_BAD_REQUEST,
+        ) from exc
+    except LLMRateLimitError as exc:
+        raise AppError(
+            code="llm_rate_limited",
+            message="LLM rate limit exceeded. Please retry shortly.",
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         ) from exc
     except LLMCallError as exc:
         raise AppError(

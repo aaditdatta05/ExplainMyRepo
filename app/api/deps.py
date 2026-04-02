@@ -31,9 +31,13 @@ def get_analysis_orchestrator() -> RepositoryAnalysisOrchestrator:
     settings = get_settings()
 
     provider = get_llm_provider()
+    fallback_providers = []
+    if not isinstance(provider, TemplateLLMProvider):
+        fallback_providers.append(TemplateLLMProvider())
 
     client = ResilientLLMClient(
         provider=provider,
+        fallback_providers=fallback_providers,
         retry_config=LLMRetryConfig(
             timeout_seconds=settings.llm_timeout_seconds,
             max_retries=settings.llm_max_retries,

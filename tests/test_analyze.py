@@ -1,6 +1,9 @@
 from fastapi.testclient import TestClient
 
+from app.api.deps import get_analysis_orchestrator
 from app.main import app
+from app.core.config import get_settings
+from app.services.llm import LLMRateLimitError
 
 client = TestClient(app)
 
@@ -82,3 +85,43 @@ def test_analyze_export_json() -> None:
     payload = response.json()
     assert payload["format"] == "json"
     assert "sections" in payload["content"]
+
+
+def test_analyze_repository_falls_back_when_gemini_missing_key(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("EXPLAIN_MY_REPO_LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("EXPLAIN_MY_REPO_GEMINI_API_KEY", "")
+    get_settings.cache_clear()
+
+    response = client.post(
+        "/analyze",
+        json={"repository_url": "https://github.com/psf/requests"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["repository_url"] == "https://github.com/psf/requests"
+
+    get_settings.cache_clear()
+
+
+def test_analyze_repository_rate_limit_returns_429() -> None:
+    class RateLimitedOrchestrator:
+        async def analyze(self, repo_url: str):
+            raise LLMRateLimitError("rate limited")
+
+        async def stream_analyze(self, repo_url: str):
+            yield {"event": "status", "data": "unused"}
+
+    app.dependency_overrides[get_analysis_orchestrator] = lambda: RateLimitedOrchestrator()
+    try:
+        response = client.post(
+            "/analyze",
+            json={"repository_url": "https://github.com/psf/requests"},
+        )
+    finally:
+        app.dependency_overrides.pop(get_analysis_orchestrator, None)
+
+    assert response.status_code == 429
+    payload = response.json()
+    assert payload["code"] == "llm_rate_limited"
