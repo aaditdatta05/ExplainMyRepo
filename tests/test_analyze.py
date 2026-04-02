@@ -19,6 +19,17 @@ def test_analyze_repository_success() -> None:
     assert isinstance(payload["citations"], list)
 
 
+def test_analyze_repository_form_success() -> None:
+    response = client.post(
+        "/analyze/form",
+        data={"repository_url": "https://github.com/psf/requests"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["repository_url"] == "https://github.com/psf/requests"
+
+
 def test_analyze_repository_invalid_url_returns_error_model() -> None:
     response = client.post(
         "/analyze",

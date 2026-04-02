@@ -1,11 +1,18 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from time import time
+from typing import TypeAlias
+
+from app.models.analysis import ExplanationResult
+
+CachePayload: TypeAlias = tuple[ExplanationResult, str, dict[str, object]]
 
 
 @dataclass(slots=True)
 class _CacheEntry:
     expires_at: float
-    value: tuple[object, str, dict[str, object]]
+    value: CachePayload
 
 
 class RepositoryAnalysisCache:
@@ -13,7 +20,7 @@ class RepositoryAnalysisCache:
         self._ttl_seconds = ttl_seconds
         self._store: dict[str, _CacheEntry] = {}
 
-    def get(self, key: str) -> tuple[object, str, dict[str, object]] | None:
+    def get(self, key: str) -> CachePayload | None:
         entry = self._store.get(key)
         if entry is None:
             return None
@@ -24,7 +31,7 @@ class RepositoryAnalysisCache:
 
         return entry.value
 
-    def set(self, key: str, value: tuple[object, str, dict[str, object]]) -> None:
+    def set(self, key: str, value: CachePayload) -> None:
         self._store[key] = _CacheEntry(
             expires_at=time() + self._ttl_seconds,
             value=value,

@@ -1,3 +1,5 @@
+from collections.abc import AsyncIterator
+
 from app.models.analysis import AnalysisContext, ExplanationResult, ExplanationSections
 from app.services.analysis.github import parse_github_repo_url
 from app.services.cache import RepositoryAnalysisCache
@@ -59,7 +61,7 @@ class RepositoryAnalysisOrchestrator:
 
         return result, markdown_output, structured_output
 
-    async def stream_analyze(self, repo_url: str):
+    async def stream_analyze(self, repo_url: str) -> AsyncIterator[dict[str, object]]:
         yield {"event": "status", "data": "validating repository url"}
         parse_github_repo_url(repo_url)
 

@@ -1,5 +1,7 @@
+from collections.abc import Awaitable, Callable
+
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from app.api.deps import get_metrics_registry
 from app.api.errors import AppError
@@ -25,7 +27,10 @@ def create_app() -> FastAPI:
         return JSONResponse(status_code=exc.status_code, content=payload.model_dump())
 
     @app.middleware("http")
-    async def metrics_http_middleware(request: Request, call_next):
+    async def metrics_http_middleware(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         return await metrics_middleware(request, call_next, metrics_registry)
 
     app.include_router(health_router)

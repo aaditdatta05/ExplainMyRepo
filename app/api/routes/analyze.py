@@ -1,7 +1,8 @@
 import json
+from collections.abc import AsyncIterator
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Form, status
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from app.api.deps import get_analysis_orchestrator
@@ -18,18 +19,12 @@ from app.services.llm import LLMCallError
 router = APIRouter(prefix="/analyze", tags=["analysis"])
 
 
-@router.post("", response_model=AnalyzeRepositoryResponse, status_code=status.HTTP_200_OK)
-async def analyze_repository(
-    payload: AnalyzeRepositoryRequest,
-    orchestrator: Annotated[
-        RepositoryAnalysisOrchestrator,
-        Depends(get_analysis_orchestrator),
-    ],
+async def _analyze_repository_url(
+    repository_url: str,
+    orchestrator: RepositoryAnalysisOrchestrator,
 ) -> AnalyzeRepositoryResponse:
     try:
-        result, markdown_output, structured_output = await orchestrator.analyze(
-            str(payload.repository_url)
-        )
+        result, markdown_output, structured_output = await orchestrator.analyze(repository_url)
     except InvalidRepositoryUrlError as exc:
         raise AppError(
             code="invalid_repository_url",
@@ -56,6 +51,34 @@ async def analyze_repository(
     )
 
 
+@router.post("", response_model=AnalyzeRepositoryResponse, status_code=status.HTTP_200_OK)
+async def analyze_repository(
+    payload: AnalyzeRepositoryRequest,
+    orchestrator: Annotated[
+        RepositoryAnalysisOrchestrator,
+        Depends(get_analysis_orchestrator),
+    ],
+) -> AnalyzeRepositoryResponse:
+    return await _analyze_repository_url(
+        repository_url=str(payload.repository_url),
+        orchestrator=orchestrator,
+    )
+
+
+@router.post("/form", response_model=AnalyzeRepositoryResponse, status_code=status.HTTP_200_OK)
+async def analyze_repository_form(
+    repository_url: Annotated[str, Form(...)],
+    orchestrator: Annotated[
+        RepositoryAnalysisOrchestrator,
+        Depends(get_analysis_orchestrator),
+    ],
+) -> AnalyzeRepositoryResponse:
+    return await _analyze_repository_url(
+        repository_url=repository_url,
+        orchestrator=orchestrator,
+    )
+
+
 @router.post("/stream", status_code=status.HTTP_200_OK)
 async def stream_repository_analysis(
     payload: AnalyzeRepositoryRequest,
@@ -66,7 +89,7 @@ async def stream_repository_analysis(
 ) -> StreamingResponse:
     repository_url = str(payload.repository_url)
 
-    async def event_stream():
+    async def event_stream() -> AsyncIterator[str]:
         try:
             async for item in orchestrator.stream_analyze(repository_url):
                 yield f"event: {item['event']}\ndata: {json.dumps(item['data'])}\n\n"

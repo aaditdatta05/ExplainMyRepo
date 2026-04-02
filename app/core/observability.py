@@ -1,7 +1,9 @@
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from time import perf_counter
 
 from fastapi import Request
+from fastapi.responses import Response
 
 
 @dataclass(slots=True)
@@ -35,7 +37,11 @@ class MetricsRegistry:
         )
 
 
-async def metrics_middleware(request: Request, call_next, registry: MetricsRegistry):
+async def metrics_middleware(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+    registry: MetricsRegistry,
+) -> Response:
     started = perf_counter()
     response = await call_next(request)
     elapsed_ms = (perf_counter() - started) * 1000
