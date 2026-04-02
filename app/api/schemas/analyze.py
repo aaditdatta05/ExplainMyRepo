@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field, HttpUrl
 
 
@@ -18,3 +20,8 @@ class AnalyzeRepositoryResponse(BaseModel):
     markdown: str
     structured: dict[str, object]
     citations: list[CitationResponse]
+
+
+class AnalyzeExportRequest(BaseModel):
+    repository_url: HttpUrl = Field(description="GitHub repository URL to analyze")
+    format: Literal["markdown", "json"] = "markdown"
