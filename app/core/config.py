@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = Field(default=20.0)
     llm_max_retries: int = Field(default=2)
     llm_base_backoff_seconds: float = Field(default=0.5)
+    cache_ttl_seconds: int = Field(default=300)
 
 
 @lru_cache(maxsize=1)
