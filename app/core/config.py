@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(default="")
     gemini_api_key: str = Field(default="")
     gemini_model: str = Field(default="gemini-1.5-flash")
+    github_token: str = Field(default="")
     llm_timeout_seconds: float = Field(default=20.0)
     llm_max_retries: int = Field(default=2)
     llm_base_backoff_seconds: float = Field(default=0.5)

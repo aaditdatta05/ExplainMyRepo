@@ -47,6 +47,7 @@ def get_analysis_orchestrator() -> RepositoryAnalysisOrchestrator:
     return RepositoryAnalysisOrchestrator(
         llm_client=client,
         cache=get_analysis_cache(),
+        github_token=settings.github_token or None,
     )
 
 
